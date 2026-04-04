@@ -1,4 +1,20 @@
+const tableName = 'watch_history'
 let currentVideoId = null;
+
+// Listen for messages from the popup
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "findMatches") {
+        findMatches(request.videoId, request.username, request.daysBack, request.headers, request.supaUrl)
+            .then(matches => sendResponse({ success: true, matches: matches }))
+            .catch(error => sendResponse({ success: false, error: error.message }));
+        return true; // Keep message channel open for async sendResponse
+    } else if (request.action === "getAllMatches") {
+        fetchAllMatches(request.username, request.headers, request.supaUrl)
+            .then(matches => sendResponse({ success: true, matches: matches }))
+            .catch(error => sendResponse({ success: false, error: error.message }));
+        return true;
+    }
+});
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { //listens for tab updates and checks if the url is a youtube video
     if (changeInfo.status === "complete" && tab.url && tab.url.includes("youtube.com/watch")) {
@@ -25,8 +41,17 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { //listens for ta
                 'Prefer': 'return=representation'
             };
 
-            // Passing data as an object that Supabase expects
-            insertToSupabase({ video_id: currentVideoId, username: username }, headers, supaUrl);
+            insertToSupabase({ video_id: currentVideoId, username: username }, headers, supaUrl)
+            // .then(() => {
+            //     // Defaulting to 7 days back
+            //     return findMatches(currentVideoId, username, 7, headers, supaUrl);
+            // })
+            // .then(matches => {
+            //     if (matches && matches.length > 0) {
+            //         console.log("Matches found:", matches);
+            //         // Future: Send to popup or content script
+            //     }
+            // });
         });
     }
 });
@@ -45,7 +70,6 @@ function getYoutubeVideoId(urlString) {
 
 async function insertToSupabase(videoData, headers, supaUrl) {
     try {
-        const tableName = 'watch_history'
         const response = await fetch(`${supaUrl}/rest/v1/${tableName}`, {
             method: 'POST',
             headers: headers,
@@ -54,6 +78,10 @@ async function insertToSupabase(videoData, headers, supaUrl) {
 
         if (!response.ok) {
             const errorText = await response.text();
+            if (response.status === 409) {
+                // Return success if it's just a duplicate
+                return { success: true, duplicate: true };
+            }
             throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
 
@@ -64,9 +92,64 @@ async function insertToSupabase(videoData, headers, supaUrl) {
     } catch (error) {
         if (error.message.includes("409")) {
             console.log("Video id is already saved");
+            return { success: true, duplicate: true };
         } else {
             console.error('Background insert failed:', error);
+            return { success: false, error: error.message };
         }
-        return { success: false, error: error.message };
+    }
+}
+
+async function findMatches(videoId, myUsername, daysBack, headers, supaUrl) {
+    try {
+        // Calculate date cutoff
+        const dateCutoff = new Date();
+        dateCutoff.setDate(dateCutoff.getDate() - daysBack);
+        const isoDate = dateCutoff.toISOString();
+
+        // Query for same video within  range
+        const url = `${supaUrl}/rest/v1/${tableName}?video_id=eq.${videoId}&username=neq.${myUsername}&created_at=gte.${isoDate}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: headers
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log(`Found ${data.length} match(es) in the last ${daysBack} days.`);
+        return data;
+
+    } catch (error) {
+        console.error('Failed to find matches:', error);
+        return [];
+    }
+}
+
+async function fetchAllMatches(myUsername, headers, supaUrl) {
+    try {
+        const url = `${supaUrl}/rest/v1/${tableName}?username=neq.${myUsername}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: headers
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log(`Found ${data.length} match(es) in the last ${daysBack} days.`);
+        return data;
+
+    } catch (error) {
+        console.error('Failed to find matches:', error);
+        return [];
     }
 }
