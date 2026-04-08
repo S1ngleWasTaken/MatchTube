@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             .catch(error => sendResponse({ success: false, error: error.message }));
         return true; // Keep message channel open for async sendResponse
     } else if (request.action === "getAllMatches") {
-        fetchAllMatches(request.username, request.headers, request.supaUrl)
+        fetchAllMatches(request.username, request.videoId, request.headers, request.supaUrl)
             .then(matches => sendResponse({ success: true, matches: matches }))
             .catch(error => sendResponse({ success: false, error: error.message }));
         return true;
@@ -31,6 +31,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { //listens for ta
 
             const currentVideoId = getYoutubeVideoId(tab.url);
             if (!currentVideoId) return;
+            const videoTitle = tab.title;
 
             console.log("Current Video ID:", currentVideoId);
 
@@ -41,7 +42,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { //listens for ta
                 'Prefer': 'return=representation'
             };
 
-            insertToSupabase({ video_id: currentVideoId, username: username }, headers, supaUrl)
+            insertToSupabase({ video_id: currentVideoId, username: username, video_title: videoTitle }, headers, supaUrl)
             // .then(() => {
             //     // Defaulting to 7 days back
             //     return findMatches(currentVideoId, username, 7, headers, supaUrl);
@@ -130,9 +131,9 @@ async function findMatches(videoId, myUsername, daysBack, headers, supaUrl) {
     }
 }
 
-async function fetchAllMatches(myUsername, headers, supaUrl) {
+async function fetchAllMatches(myUsername,videoId, headers, supaUrl) {
     try {
-        const url = `${supaUrl}/rest/v1/${tableName}?username=neq.${myUsername}`;
+        const url = `${supaUrl}/rest/v1/${tableName}?username=neq.${myUsername}&video_id=eq.${videoId}`;
 
         const response = await fetch(url, {
             method: 'GET',

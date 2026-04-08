@@ -3,6 +3,8 @@ let matchesPage = document.getElementById('matches-page');
 let settingsIconBtn = document.getElementById('settings-icon-btn');
 let matchesIconBtn = document.getElementById('matches-icon-btn');
 
+const userColors = ['#e4431aff', '#00ff59ff', '#0088ffff', '#fff710ff', '#ffb700ff', '#00ff8cff']
+
 chrome.storage.local.get(['supabaseUrl', 'supabaseKey', 'username'], (result) => { // sets defaul input values
     const supaUrl = result.supabaseUrl;
     const supaKey = result.supabaseKey;
@@ -95,7 +97,8 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                     }
 
                     if (response && response.success) {
-                        renderAllMatches(response.matches);
+                        renderCurrentVideoMatches(response.matches)
+                        // renderAllMatches(response.matches);
                     } else {
                         document.getElementById('matchStatus').textContent = 'Error: ' + (response?.error || 'Unknown');
                     }
@@ -118,17 +121,58 @@ function renderCurrentVideoMatches(matches) {
         status.textContent = 'No other matches found yet.';
     } else {
         status.textContent = `${matches.length} matcher(s) found!`;
-        matches.forEach(match => {
-            const li = document.createElement('li');
-            li.style.padding = '8px';
-            li.style.margin = '4px 0';
-            li.style.backgroundColor = '#f9f9f9';
-            li.style.borderRadius = '4px';
-            li.style.fontSize = '14px';
-            li.style.color = '#000'
-            li.textContent = `👤 ${match.username}`;
-            list.appendChild(li);
+        let match = matches[0];
+        const div = document.createElement('div');
+        const thumbnail = document.createElement('img');
+        const videoInfoDiv = document.createElement('div');
+        const userMatchesDiv = document.createElement('div');
+        const videoTitleLink = document.createElement('a');
+
+        thumbnail.src = `https://img.youtube.com/vi/${match.video_id}/default.jpg`;
+        thumbnail.height = 50;
+
+        videoTitleLink.textContent = match.video_title;
+        videoTitleLink.href = `https://www.youtube.com/watch?v=${match.video_id}`;
+        videoTitleLink.target = '_blank';
+
+        videoInfoDiv.style.color = "#000";
+        videoInfoDiv.style.display = 'flex';
+        videoInfoDiv.style.flexDirection = 'column';
+        videoInfoDiv.style.gap = '8px'
+        videoInfoDiv.appendChild(videoTitleLink);
+        videoInfoDiv.appendChild(userMatchesDiv);
+
+        userMatchesDiv.style.display = 'flex'
+        userMatchesDiv.style.flexWrap = 'wrap'
+        userMatchesDiv.style.rowGap = '4px'
+
+
+        // user matches
+        matches.forEach(m => {
+            const userSpan = document.createElement('span');
+
+            userSpan.style.padding = '4px';
+            userSpan.style.borderRadius = '4px';
+            userSpan.style.backgroundColor = userColors[Math.floor(Math.random() * userColors.length)];
+            userSpan.style.marginLeft = '4px';
+
+            userSpan.textContent = m.username;
+            userMatchesDiv.appendChild(userSpan);
         });
+
+        div.style.padding = '8px';
+        div.style.margin = '4px 0';
+        div.style.backgroundColor = '#f9f9f9';
+        div.style.borderRadius = '4px';
+        div.style.fontSize = '14px';
+        div.style.color = '#000';
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.gap = '8px';
+        div.appendChild(thumbnail);
+        div.appendChild(videoInfoDiv);
+
+        list.appendChild(div);
     }
 }
 
