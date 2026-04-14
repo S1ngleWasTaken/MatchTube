@@ -52,15 +52,6 @@ FOR ALL USING (true) WITH CHECK (true);
 
 ---
 
-## 📦 Installation
-
-1.  Clone this repository or download the source code.
-2.  Open Chrome and navigate to `chrome://extensions/`.
-3.  Enable **Developer mode** (toggle in the top right).
-4.  Click **Load unpacked** and select the folder containing this extension.
-
----
-
 ## ⚙️ Configuration
 
 1.  Click the **MatchTube icon** (🎬) in your browser toolbar.
