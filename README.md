@@ -45,9 +45,9 @@ CREATE POLICY "Allow public access" ON watch_history
 FOR ALL USING (true) WITH CHECK (true);
 ```
 
-### 3. Get your API Keys
-1.  Go to **Project Settings** > **API**.
-2.  Copy your **Project URL**.
+### 3. Get your URL and API Key
+1.  Copy your **Project URL** in **Project Overview**.
+2.  Go to **Project Settings** > **API**.
 3.  Copy your **anon (public) API Key**.
 
 ---
