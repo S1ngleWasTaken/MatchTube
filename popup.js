@@ -32,26 +32,41 @@ document.getElementById('saveButton').addEventListener('click', () => {
     const dbKey = document.getElementById('keyInput').value.trim();
     const username = document.getElementById('usernameInput').value.trim();
 
-    if (!dbUrl || !dbKey || !username) {
-        const btn = document.getElementById('saveButton');
-        btn.textContent = 'Fill all fields';
-        btn.style.background = '#e74c3c';
-        setTimeout(() => {
-            btn.textContent = 'Save Configuration';
-            btn.style.background = '';
-        }, 2000);
-        return;
+    if (dbUrl) {
+        chrome.storage.local.set({ supabaseUrl: dbUrl }, () => {
+            const btn = document.getElementById('saveButton');
+            btn.textContent = '✓ Configuration Saved';
+            btn.style.background = '#27ae60';
+            setTimeout(() => {
+                btn.textContent = 'Save Configuration';
+                btn.style.background = '';
+            }, 1500);
+        });
     }
 
-    chrome.storage.local.set({ supabaseUrl: dbUrl, supabaseKey: dbKey, username: username }, () => {
-        const btn = document.getElementById('saveButton');
-        btn.textContent = '✓ Configuration Saved';
-        btn.style.background = '#27ae60';
-        setTimeout(() => {
-            btn.textContent = 'Save Configuration';
-            btn.style.background = '';
-        }, 1500);
-    });
+    if (dbKey) {
+        chrome.storage.local.set({ supabaseKey: dbKey }, () => {
+            const btn = document.getElementById('saveButton');
+            btn.textContent = '✓ Configuration Saved';
+            btn.style.background = '#27ae60';
+            setTimeout(() => {
+                btn.textContent = 'Save Configuration';
+                btn.style.background = '';
+            }, 1500);
+        });
+    }
+
+    if (username) {
+        chrome.storage.local.set({ username: username }, () => {
+            const btn = document.getElementById('saveButton');
+            btn.textContent = '✓ Configuration Saved';
+            btn.style.background = '#27ae60';
+            setTimeout(() => {
+                btn.textContent = 'Save Configuration';
+                btn.style.background = '';
+            }, 1500);
+        });
+    }
 });
 
 // find all matches button logic

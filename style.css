@@ -27,6 +27,18 @@ body {
   flex-direction: column;
 }
 
+a {
+  color: var(--text-dim);
+}
+
+footer {
+  margin-top: auto;
+  padding-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 h1 {
   font-size: 24px;
   margin: 0 0 16px 0;
@@ -103,6 +115,12 @@ label {
   font-size: 12px;
   color: var(--text-dim);
   font-weight: 500;
+}
+
+.settings-heading-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 input {
